@@ -28,7 +28,8 @@ AND account_id = 'YOUR-ID';
 ```sql
 SELECT 
   name,
-  type 
+  type,
+  value
 FROM 
   YOUR-ACCOUNT.aws_ssm_parameter
 WHERE
