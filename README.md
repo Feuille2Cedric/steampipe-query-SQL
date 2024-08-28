@@ -22,7 +22,6 @@ AND account_id = 'YOUR-ID';
 +-------------------+-------------+--------------------+--------+------------+
 ```
 
-
 ## SSM Parameter without Encryption
 
 ```sql
@@ -43,7 +42,7 @@ OR
 +------------------------------------------------------------------------------------+
 ```
 
-## AMI not encrypted
+## AWS AMI Encryption
 
 ```sql
 SELECT
@@ -60,7 +59,7 @@ WHERE
     );
 ```
 
-## Snapshots not encrypted
+## EBS Snapshot Encrypted
 
 ```sql
 SELECT
@@ -74,7 +73,7 @@ WHERE
     encrypted = 'False'
 ```
 
-## Instance with a public IP
+## EC2 Instance Not In Public Subnet
 
 ```sql
 SELECT
