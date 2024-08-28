@@ -22,7 +22,6 @@ AND account_id = 'YOUR-ID';
 +-------------------+-------------+--------------------+--------+------------+
 ```
 
-
 ## SSM Parameter without Encryption
 
 ```sql
@@ -41,4 +40,48 @@ OR
 | name                                                                  | type       |
 +-----------------------------------------------------------------------+------------+
 +------------------------------------------------------------------------------------+
+```
+
+## AWS AMI Encryption
+
+```sql
+SELECT
+    name,
+    image_id,
+    block_device_mappings
+FROM
+    YOUR-ACCOUNT.aws_ec2_ami
+WHERE
+    EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(block_device_mappings) AS elem
+        WHERE elem -> 'Ebs' ->> 'Encrypted' = 'false'
+    );
+```
+
+## EBS Snapshot Encrypted
+
+```sql
+SELECT
+    snapshot_id,
+    volume_id,
+    encrypted,
+    account_id
+FROM
+    YOUR-ACCOUNT.aws_ebs_snapshot
+WHERE
+    encrypted = 'False'
+```
+
+## EC2 Instance Not In Public Subnet
+
+```sql
+SELECT
+    instance_id,
+    public_ip_address
+FROM
+    YOUR-ACCOUNT.aws_ec2_instance
+WHERE
+    public_ip_address IS NOT NULL;
+
 ```
