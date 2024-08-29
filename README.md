@@ -181,7 +181,103 @@ SELECT
 FROM
   volumes_without_recent_snapshots v
 JOIN
-  teamwork_aws_all.aws_ec2_instance i ON v.instance_id = i.instance_id
+  YOUR-ACCOUNT.aws_ec2_instance i ON v.instance_id = i.instance_id
 ORDER BY
   i.account_id;
+```
+
+## S3 Buckets Encrypted with Customer-Provided CMKs
+
+```sql
+SELECT
+  name,
+  CASE
+    WHEN server_side_encryption_configuration IS NULL THEN 'Not Encrypted'
+    WHEN server_side_encryption_configuration::text LIKE '%aws:kms%' AND server_side_encryption_configuration::text LIKE '%arn:aws:kms%' THEN 'Encrypted with CMK'
+    WHEN server_side_encryption_configuration::text LIKE '%AES256%' THEN 'Encrypted without CMK'
+    ELSE 'Unknown'
+  END AS encryption_status,
+  server_side_encryption_configuration
+FROM
+  YOUR-ACCOUNT.aws_s3_bucket;
+```
+
+## EC2 Instance Using IAM Roles
+
+```sql
+SELECT
+  instance_id,
+  CASE
+    WHEN iam_instance_profile_arn IS NOT NULL THEN 'IAM Role'
+    ELSE 'Access Key'
+  END AS authentication_method,
+  instance_type,
+  instance_state AS state,
+  iam_instance_profile_arn AS iam_role_arn
+FROM
+  YOUR-ACCOUNT.aws_ec2_instance;
+```
+
+## Unused AWS EC2 Key Pairs
+
+```sql
+WITH used_key_pairs AS (
+  SELECT
+    DISTINCT key_name,
+    STRING_AGG(instance_id, ', ') AS instances
+  FROM
+    YOUR-ACCOUNT.aws_ec2_instance
+  WHERE
+    key_name IS NOT NULL
+  GROUP BY
+    key_name
+)
+SELECT
+  kp.key_name,
+  CASE
+    WHEN ukp.key_name IS NOT NULL THEN 'Used'
+    ELSE 'Unused'
+  END AS usage_status,
+  COALESCE(ukp.instances, 'None') AS instances_used
+FROM
+  YOUR-ACCOUNT.aws_ec2_key_pair kp
+LEFT JOIN
+  used_key_pairs ukp ON kp.key_name = ukp.key_name;
+```
+
+## EC2 Instance Termination Protection
+
+```sql
+SELECT
+  instance_id,
+  instance_type,
+  instance_state AS state,
+  CASE
+    WHEN disable_api_termination = true THEN 'Enabled'
+    ELSE 'Disabled'
+  END AS termination_protection_status
+FROM
+  YOUR-ACCOUNT.aws_ec2_instance;
+```
+
+## Password Policy Expiration
+
+```sql
+SELECT
+  CASE 
+    WHEN expire_passwords THEN 'Enabled'
+    ELSE 'Disabled'
+  END AS password_expiration_status
+FROM
+  YOUR-ACCOUNT.aws_iam_account_password_policy;
+```
+
+## S3 Bucket Versioning Enabled
+
+```sql
+SELECT
+  name AS bucket_name,
+  versioning_enabled
+FROM
+  YOUR-ACCOUNT.aws_s3_bucket;
 ```
